@@ -53,7 +53,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 var expected = DefaultExpected();
                 
-                expected.Counters.Add(new MetricDataEquatable { Name = "Failed", Unit = Unit.Calls, SubCounters = new[] {"RequestTimeout"} });
+                expected.Counters.Add(new MetricDataEquatable { Name = "TimedOut", Unit = Unit.Calls, SubCounters = new[] {"RequestTimeout"} });
 
                 GetMetricsData().AssertEquals(expected);
             }            
@@ -119,7 +119,7 @@ namespace Gigya.Microdot.UnitTests.ServiceProxyTests
             {
                 var expected = DefaultExpected();
 
-                expected.Counters.Add(new MetricDataEquatable { Name = "Failed",  Unit = Unit.Calls  });
+                expected.Counters.Add(new MetricDataEquatable { Name = "BadResponse",  Unit = Unit.Calls  });
                 expected.Timers.Add(new MetricDataEquatable { Name = "Deserialization", Unit = Unit.Calls });
 
                 GetMetricsData().AssertEquals(expected);

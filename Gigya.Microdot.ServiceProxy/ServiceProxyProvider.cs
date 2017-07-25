@@ -98,6 +98,7 @@ namespace Gigya.Microdot.ServiceProxy
         private readonly Counter _failureCounter;
         /// <summary>Counts fatal errors with remote hosts, that cause us to disconnect from it.</summary>
         private readonly Counter _hostFailureCounter;
+        private readonly Counter _timedoutCounter;
         private readonly Counter _applicationExceptionCounter;
 
         private HttpMessageHandler _httpMessageHandler = new WebRequestHandler();
@@ -157,8 +158,9 @@ namespace Gigya.Microdot.ServiceProxy
             _roundtripTime = metricsContext.Timer("Roundtrip", Unit.Calls);
 
             _successCounter = metricsContext.Counter("Success", Unit.Calls);
-            _failureCounter = metricsContext.Counter("Failed", Unit.Calls);
+            _failureCounter = metricsContext.Counter("BadResponse", Unit.Calls);
             _hostFailureCounter = metricsContext.Counter("HostFailure", Unit.Calls);
+            _timedoutCounter = metricsContext.Counter("TimedOut", Unit.Calls);
             _applicationExceptionCounter = metricsContext.Counter("ApplicationException", Unit.Calls);
 
             ServiceDiscovery = serviceDiscoveryFactory(serviceName, IsReachable);
@@ -397,8 +399,8 @@ namespace Gigya.Microdot.ServiceProxy
                     continue;
                 }
                 catch (TaskCanceledException ex)
-                {
-                    _failureCounter.Increment("RequestTimeout");
+                {                    
+                    _timedoutCounter.Increment("RequestTimeout");
 
                     Exception rex = new RemoteServiceException("The request to the remote service exceeded the " +
                                                                "allotted timeout. See the 'RequestUri' property on this exception for the URL that was " +
@@ -411,6 +413,7 @@ namespace Gigya.Microdot.ServiceProxy
                             {"requestUri", uri}
                         });
 
+                    endPoint.ReportFailure(rex);
                     serviceEvent.Exception = rex;
 
                     EventPublisher.TryPublish(serviceEvent); // fire and forget!
